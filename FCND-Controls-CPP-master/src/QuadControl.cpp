@@ -191,20 +191,10 @@ float QuadControl::AltitudeControl(float posZCmd, float velZCmd, float posZ, flo
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
 <<<<<<< Updated upstream
-  //Encontramos el error
-  float Zerr = posZCmd - posZ;
-  //se integra el error
-  integratedAltitudeError += Zerr * dt;
-
-  float hdotCmd = velZCmd + (kpPosZ * Zerr) + (KiPosZ * integratedAltitudeError);
- 
-  float accelCmd = accelZCmd + (kpVelZ*(hdotCmd-velZ));
-  //Limitamos el ascenso y descenso
-  thrust = -mass * CONSTRAIN((accelCmd - 9.81) / R(2, 2), -maxAscentRate / dt, maxAscentRate / dt);
-=======
   float z_err = posZCmd - posZ;
   float p_term = kpPosZ * z_err;
   
+  //Encontramos el error
   float z_dot_err = velZCmd - velZ;
   integratedAltitudeError += z_err * dt;
 
@@ -214,10 +204,10 @@ float QuadControl::AltitudeControl(float posZCmd, float velZCmd, float posZ, flo
   float b_z = R(2,2);
 
   float u_1_bar = p_term + d_term + i_term + accelZCmd;
->>>>>>> Stashed changes
 
   float acc = ( u_1_bar - CONST_GRAVITY ) / b_z;
 
+  //Limitamos el ascenso y el descenso
   thrust = - mass * CONSTRAIN(acc, - maxAscentRate / dt, maxAscentRate / dt);
   /////////////////////////////// END STUDENT CODE ////////////////////////////
   
@@ -251,7 +241,6 @@ V3F QuadControl::LateralPositionControl(V3F posCmd, V3F velCmd, V3F pos, V3F vel
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
 <<<<<<< Updated upstream
-  velCmd.constrain(-maxSpeedXY, maxSpeedXY);
   V3F kpPos;
   kpPos.x = kpPosXY;
   kpPos.y = kpPosXY;
@@ -261,35 +250,17 @@ V3F QuadControl::LateralPositionControl(V3F posCmd, V3F velCmd, V3F pos, V3F vel
   kpVel.x = kpVelXY;
   kpVel.y = kpVelXY;
   kpVel.z = 0.f;
-
-  //Errores de posicion y velocidad
-  V3F posErr = posCmd - pos;
-  V3F velErr = velCmd - velCmd;
-  //Calculo de la aceleracion deseada
-  accelCmd = accelCmdFF + (kpPos * posErr) + (kpVel * velErr);
-  accelCmd.constrain(-maxAccelXY, maxAccelXY);
-  accelCmd.z = 0;
-=======
->>>>>>> Stashed changes
-  
-  V3F kpPos;
-  kpPos.x = kpPosXY;
-  kpPos.y = kpPosXY;
-  kpPos.z = 0.f;
-
-  V3F kpVel;
-  kpVel.x = kpVelXY;
-  kpVel.y = kpVelXY;
-  kpVel.z = 0.f;
-  
+  //Verificamos que la velocidad deseada este entre la permitida
   V3F capVelCmd;
   if ( velCmd.mag() > maxSpeedXY ) {
     capVelCmd = velCmd.norm() * maxSpeedXY;
   } else {
     capVelCmd = velCmd;
   }
-  
-  accelCmd = kpPos * ( posCmd - pos ) + kpVel * ( capVelCmd - vel ) + accelCmd;
+  //Errores de posicion
+  V3F posErr = posCmd - pos;
+  //Calculo de la aceleracion deseada
+  accelCmd = kpPos * ( posErr ) + kpVel * ( capVelCmd - vel ) + accelCmd;
   
   if ( accelCmd.mag() > maxAccelXY ) {
     accelCmd = accelCmd.norm() * maxAccelXY;
@@ -316,33 +287,13 @@ float QuadControl::YawControl(float yawCmd, float yaw)
   float yawRateCmd=0;
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
 <<<<<<< Updated upstream
-//definimos el angulo yaw deseado
-  float desiredYaw;
   //de acuerdo al angulo a ordenar escogemos el yaw deseado
-  if (yawCmd > 0) {
-      desiredYaw = fmodf(yawCmd, 2 * F_PI);
-  }
-  else {
-      desiredYaw = -fmodf(-yawCmd, 2 * F_PI);
-  }
-  //Sacamos el error
-  float yawError = desiredYaw - yaw;
-  if (yawError <= -F_PI) {
-      yawError += (0.2f * F_PI);
-
-  }else if (yawError > F_PI) {
-      yawError -= (0.2f * F_PI);
-  }
-  yawRateCmd = kpYaw * yawError;
-
-=======
-  
-  float yaw_cmd_2_pi = 0;
   if ( yawCmd > 0 ) {
     yaw_cmd_2_pi = fmodf(yawCmd, 2 * F_PI);
   } else {
     yaw_cmd_2_pi = -fmodf(-yawCmd, 2 * F_PI);
   }
+  //Sacamos el error
   float err = yaw_cmd_2_pi - yaw;
   if ( err > F_PI ) {
     err -= 2 * F_PI;
@@ -350,7 +301,7 @@ float QuadControl::YawControl(float yawCmd, float yaw)
     err += 2 * F_PI;
   }
   yawRateCmd = kpYaw * err;
->>>>>>> Stashed changes
+  
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
   return yawRateCmd;
