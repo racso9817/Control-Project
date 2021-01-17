@@ -45,7 +45,10 @@ public:
   float maxAccelXY;
   float maxTiltAngle;
   float minMotorThrust, maxMotorThrust;
+  
+  
 
   // integral control
   float integratedAltitudeError;
+  
 };
