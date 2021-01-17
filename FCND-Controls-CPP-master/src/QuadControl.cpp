@@ -160,7 +160,16 @@ float QuadControl::AltitudeControl(float posZCmd, float velZCmd, float posZ, flo
   float thrust = 0;
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+  //Encontramos el error
+  float Zerr = posZCmd - posZ;
+  //se integra el error
+  integratedAltitudeError += Zerr * dt;
 
+  float hdotCmd = velZCmd + (kpPosZ * Zerr) + (KiPosZ * integratedAltitudeError);
+ 
+  float accelCmd = accelZCmd + (kpVelZ*(hdotCmd-velZ));
+  //Limitamos el ascenso y descenso
+  thrust = -mass * CONSTRAIN((accelCmd - 9.81) / R(2, 2), -maxAscentRate / dt, maxAscentRate / dt);
 
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
@@ -198,7 +207,24 @@ V3F QuadControl::LateralPositionControl(V3F posCmd, V3F velCmd, V3F pos, V3F vel
   V3F accelCmd = accelCmdFF;
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+  velCmd.constrain(-maxSpeedXY, maxSpeedXY);
+  V3F kpPos;
+  kpPos.x = kpPosXY;
+  kpPos.y = kpPosXY;
+  kpPos.z = 0.f;
 
+  V3F kpVel;
+  kpVel.x = kpVelXY;
+  kpVel.y = kpVelXY;
+  kpVel.z = 0.f;
+
+  //Errores de posicion y velocidad
+  V3F posErr = posCmd - pos;
+  V3F velErr = velCmd - velCmd;
+  //Calculo de la aceleracion deseada
+  accelCmd = accelCmdFF + (kpPos * posErr) + (kpVel * velErr);
+  accelCmd.constrain(-maxAccelXY, maxAccelXY);
+  accelCmd.z = 0;
   
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
@@ -221,7 +247,24 @@ float QuadControl::YawControl(float yawCmd, float yaw)
 
   float yawRateCmd=0;
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+//definimos el angulo yaw deseado
+  float desiredYaw;
+  //de acuerdo al angulo a ordenar escogemos el yaw deseado
+  if (yawCmd > 0) {
+      desiredYaw = fmodf(yawCmd, 2 * F_PI);
+  }
+  else {
+      desiredYaw = -fmodf(-yawCmd, 2 * F_PI);
+  }
+  //Sacamos el error
+  float yawError = desiredYaw - yaw;
+  if (yawError <= -F_PI) {
+      yawError += (0.2f * F_PI);
 
+  }else if (yawError > F_PI) {
+      yawError -= (0.2f * F_PI);
+  }
+  yawRateCmd = kpYaw * yawError;
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
